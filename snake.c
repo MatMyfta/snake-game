@@ -3,38 +3,41 @@
 /*
  * Initialise snake position
  */
-void s_init(uint8_t **field, Snake *snake) {
-    Node n;             // initial head and tail position
-    n.x = FIELD_SIZE/2;     // center
-    n.y = 1;                // left
-    snake->head = snake->tail = n;
+void s_init(Snake *snake) {
+    uint8_t initial_x = 2;
+    uint8_t initial_y = LCD_SIZE/(RATIO*2);
+    Node n = { .x = initial_x, .y = initial_y, .next = (void*)0, .prev = (void*)0 };
+    snake->head = &n;
+    snake->tail = &n;
 
-    s_add(field, snake, n.x, n.y+1);
-    s_add(field, snake, n.x, n.y+2);
+    _graphics_drawNode(n.x, n.y);
+
+    s_add(snake, n.x+1, n.y);
+    snake->tail->prev = snake->head;
+    s_add(snake, n.x+2, n.y);
 }
 
 /*
  * moves the snake
  */
-void s_move(uint8_t **field, Snake *s, uint8_t x, uint8_t y) {
-    Node h_tmp = { .x = x, .y = y, .next = &(s->head) };
-    Node t_tmp = *(s->tail.next);
+void s_move(Snake *s, uint8_t x, uint8_t y) {
+    Node h_tmp = { .x = x, .y = y, .next = s->head, .prev = (void*)0};
+    Node t_tmp = *(s->tail->prev);
 
     // move the head
-    s->head = h_tmp;
-    field[x][y] = SNAKE;
+    s->head = &h_tmp;
 
     // move the tail
-    field[s->tail.x][s->tail.y] = EMPTY;
-    s->tail = t_tmp;
+    s->tail = &t_tmp;
 }
 
 /*
  * Add a node to the snake by adding a new point to the head
  */
-void s_add(uint8_t **field, Snake *s, uint8_t x, uint8_t y) {
-    Node tmp = { .x = x, .y = y, .next = &(s->head) };
-    s->head = tmp;
+void s_add(Snake *s, uint8_t x, uint8_t y) {
+    Node tmp = { .x = x, .y = y, .next = s->head, .prev = (void*)0 };
+    s->head->prev = &tmp;
+    s->head = &tmp;
 
-    field[x][y] = SNAKE;
+    _graphics_drawNode(s->head->x, s->head->y);
 }

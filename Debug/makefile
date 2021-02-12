@@ -10,7 +10,6 @@ GEN_OPTS__FLAG :=
 GEN_CMDS__FLAG := 
 
 ORDERED_OBJS += \
-"./field.o" \
 "./graphics.o" \
 "./main.o" \
 "./snake.o" \
@@ -177,8 +176,8 @@ snake_proj.hex: $(EXE_OUTPUTS)
 # Other Targets
 clean:
 	-$(RM) $(BIN_OUTPUTS__QUOTED)$(EXE_OUTPUTS__QUOTED)
-	-$(RM) "field.o" "graphics.o" "main.o" "snake.o" "system_msp432p401r.o" "LcdDriver\Crystalfontz128x128_ST7735.o" "LcdDriver\HAL_MSP_EXP432P401R_Crystalfontz128x128_ST7735.o" "gcc\startup_msp432p401r_gcc.o" 
-	-$(RM) "field.d" "graphics.d" "main.d" "snake.d" "system_msp432p401r.d" "LcdDriver\Crystalfontz128x128_ST7735.d" "LcdDriver\HAL_MSP_EXP432P401R_Crystalfontz128x128_ST7735.d" "gcc\startup_msp432p401r_gcc.d" 
+	-$(RM) "graphics.o" "main.o" "snake.o" "system_msp432p401r.o" "LcdDriver\Crystalfontz128x128_ST7735.o" "LcdDriver\HAL_MSP_EXP432P401R_Crystalfontz128x128_ST7735.o" "gcc\startup_msp432p401r_gcc.o" 
+	-$(RM) "graphics.d" "main.d" "snake.d" "system_msp432p401r.d" "LcdDriver\Crystalfontz128x128_ST7735.d" "LcdDriver\HAL_MSP_EXP432P401R_Crystalfontz128x128_ST7735.d" "gcc\startup_msp432p401r_gcc.d" 
 	-@echo 'Finished clean'
 	-@echo ' '
 

@@ -31,7 +31,7 @@
  * --/COPYRIGHT--*/
 //****************************************************************************
 //
-// main.c - MSP-EXP432P401R + Educational Boosterpack MkII - Microphone FFT
+// main.c - MSP-EXP432P401R + Educational Boosterpack MkII - Snake game
 //
 //          CMSIS DSP Software Library is used to perform 512-point FFT on
 //          the audio samples collected with MSP432's ADC14 from the Education
@@ -45,7 +45,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "snake.h"
-#include "field.h"
 #include "graphics.h"
 
 
@@ -63,7 +62,7 @@ void _graphicsInit()
     /* Initializes graphics context */
     Graphics_initContext(&g_sContext, &g_sCrystalfontz128x128,
                          &g_sCrystalfontz128x128_funcs);
-    Graphics_setForegroundColor(&g_sContext, GRAPHICS_COLOR_RED);
+    Graphics_setForegroundColor(&g_sContext, GRAPHICS_COLOR_BLACK);
     Graphics_setBackgroundColor(&g_sContext, GRAPHICS_COLOR_WHITE);
     GrContextFontSet(&g_sContext, &g_sFontFixed6x8);
     Graphics_clearDisplay(&g_sContext);
@@ -73,20 +72,15 @@ void _graphicsInit()
 void _hwInit() {
     // stop watchdog timer
     WDT_A_holdTimer();
+
+    _graphicsInit();
 }
 
 int main(void) {
 
     _hwInit();
 
-    uint8_t** field = (uint8_t **) malloc(FIELD_SIZE * FIELD_SIZE * sizeof(uint8_t));
     Snake snake;
-
-    f_init(field);
-    s_init(field, &snake);
-
-    _graphicsInit();
-
-    free(field);
+    s_init(&snake);
 
 }
