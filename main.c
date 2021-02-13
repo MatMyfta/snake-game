@@ -76,11 +76,16 @@ void _hwInit() {
     _graphicsInit();
 }
 
+
 int main(void) {
 
+    /* Initialize hardware */
     _hwInit();
 
+    /* Initialize snake structures */
     Snake snake;
     s_init(&snake);
+
+    _graphics_drawSnake(&snake);
 
 }

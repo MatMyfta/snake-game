@@ -9,7 +9,6 @@ snake.o: ../snake.c ../snake.h \
  C:/ti/simplelink_msp432p4_sdk_3_40_01_02/source/third_party/CMSIS/Include/cmsis_gcc.h \
  C:/ti/simplelink_msp432p4_sdk_3_40_01_02/source/third_party/CMSIS/Include/mpu_armv7.h \
  C:/ti/simplelink_msp432p4_sdk_3_40_01_02/source/ti/devices/msp432p4xx/inc/system_msp432p401r.h \
- ../graphics.h \
  C:/ti/simplelink_msp432p4_sdk_3_40_01_02/source/ti/devices/msp432p4xx/driverlib/driverlib.h \
  C:/ti/simplelink_msp432p4_sdk_3_40_01_02/source/ti/devices/msp432p4xx/driverlib/adc14.h \
  C:/ti/simplelink_msp432p4_sdk_3_40_01_02/source/ti/devices/msp432p4xx/driverlib/aes256.h \
@@ -40,6 +39,7 @@ snake.o: ../snake.c ../snake.h \
  C:/ti/simplelink_msp432p4_sdk_3_40_01_02/source/ti/devices/msp432p4xx/driverlib/wdt_a.h \
  C:/ti/simplelink_msp432p4_sdk_3_40_01_02/source/ti/devices/msp432p4xx/driverlib/sysctl.h \
  C:/ti/simplelink_msp432p4_sdk_3_40_01_02/source/ti/devices/msp432p4xx/driverlib/flash.h \
+ ../graphics.h \
  C:/ti/simplelink_msp432p4_sdk_3_40_01_02/source/ti/grlib/grlib.h \
  ../LcdDriver/Crystalfontz128x128_ST7735.h
 
@@ -64,8 +64,6 @@ C:/ti/simplelink_msp432p4_sdk_3_40_01_02/source/third_party/CMSIS/Include/cmsis_
 C:/ti/simplelink_msp432p4_sdk_3_40_01_02/source/third_party/CMSIS/Include/mpu_armv7.h:
 
 C:/ti/simplelink_msp432p4_sdk_3_40_01_02/source/ti/devices/msp432p4xx/inc/system_msp432p401r.h:
-
-../graphics.h:
 
 C:/ti/simplelink_msp432p4_sdk_3_40_01_02/source/ti/devices/msp432p4xx/driverlib/driverlib.h:
 
@@ -126,6 +124,8 @@ C:/ti/simplelink_msp432p4_sdk_3_40_01_02/source/ti/devices/msp432p4xx/driverlib/
 C:/ti/simplelink_msp432p4_sdk_3_40_01_02/source/ti/devices/msp432p4xx/driverlib/sysctl.h:
 
 C:/ti/simplelink_msp432p4_sdk_3_40_01_02/source/ti/devices/msp432p4xx/driverlib/flash.h:
+
+../graphics.h:
 
 C:/ti/simplelink_msp432p4_sdk_3_40_01_02/source/ti/grlib/grlib.h:
 

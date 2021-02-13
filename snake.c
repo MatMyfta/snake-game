@@ -1,4 +1,6 @@
 #include "snake.h"
+#include "graphics.h"
+#include <stdlib.h>
 
 /*
  * Initialise snake position
@@ -6,38 +8,46 @@
 void s_init(Snake *snake) {
     uint8_t initial_x = 2;
     uint8_t initial_y = LCD_SIZE/(RATIO*2);
-    Node n = { .x = initial_x, .y = initial_y, .next = (void*)0, .prev = (void*)0 };
-    snake->head = &n;
-    snake->tail = &n;
 
-    _graphics_drawNode(n.x, n.y);
+    Node *n = malloc(sizeof(Node));
+    n->x = initial_x;
+    n->y = initial_y;
+    n->next = NULL;
+    n->prev = NULL;
 
-    s_add(snake, n.x+1, n.y);
+    snake->head = n;
+    snake->tail = n;
+
+    s_add(snake, n->x+1, n->y);
     snake->tail->prev = snake->head;
-    s_add(snake, n.x+2, n.y);
+    s_add(snake, n->x+2, n->y);
 }
 
 /*
  * moves the snake
  */
-void s_move(Snake *s, uint8_t x, uint8_t y) {
-    Node h_tmp = { .x = x, .y = y, .next = s->head, .prev = (void*)0};
-    Node t_tmp = *(s->tail->prev);
-
-    // move the head
-    s->head = &h_tmp;
-
-    // move the tail
-    s->tail = &t_tmp;
-}
+void s_move(Snake *s, uint8_t x, uint8_t y) { }
 
 /*
  * Add a node to the snake by adding a new point to the head
  */
 void s_add(Snake *s, uint8_t x, uint8_t y) {
-    Node tmp = { .x = x, .y = y, .next = s->head, .prev = (void*)0 };
-    s->head->prev = &tmp;
-    s->head = &tmp;
+    Node *tmp = malloc(sizeof(Node));
+    tmp->x = x;
+    tmp->y = y;
+    tmp->next = s->head;
+    tmp->prev = NULL;
 
-    _graphics_drawNode(s->head->x, s->head->y);
+    s->head->prev = tmp;
+    s->head = tmp;
 }
+
+void deinit(Snake *s) {
+    Node *tmp = s->head;
+    while(tmp != NULL) {
+        Node *p = tmp;
+        tmp = tmp->next;
+        free(p);
+    }
+}
+
