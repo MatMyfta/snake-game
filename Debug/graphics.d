@@ -40,7 +40,7 @@ graphics.o: ../graphics.c ../graphics.h \
  C:/ti/simplelink_msp432p4_sdk_3_40_01_02/source/ti/devices/msp432p4xx/driverlib/sysctl.h \
  C:/ti/simplelink_msp432p4_sdk_3_40_01_02/source/ti/devices/msp432p4xx/driverlib/flash.h \
  C:/ti/simplelink_msp432p4_sdk_3_40_01_02/source/ti/grlib/grlib.h \
- ../LcdDriver/Crystalfontz128x128_ST7735.h ../snake.h
+ ../LcdDriver/Crystalfontz128x128_ST7735.h ../snake.h ../apple.h
 
 ../graphics.h:
 
@@ -129,3 +129,5 @@ C:/ti/simplelink_msp432p4_sdk_3_40_01_02/source/ti/grlib/grlib.h:
 ../LcdDriver/Crystalfontz128x128_ST7735.h:
 
 ../snake.h:
+
+../apple.h:

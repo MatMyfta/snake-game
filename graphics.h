@@ -6,6 +6,7 @@
 #include <ti/grlib/grlib.h>
 #include "LcdDriver/Crystalfontz128x128_ST7735.h"
 #include "snake.h"
+#include "apple.h"
 
 #ifndef __CONTEXT__
 #define __CONTEXT__
@@ -19,6 +20,10 @@ extern Graphics_Context g_sContext;
 #define RATIO       4           // 1:4, 1 node = 4 pixels
 
 void _graphics_drawSnake(Snake* s);
+void _graphics_drawNode(uint8_t x, uint8_t y);
+void _graphics_hideNode(uint8_t x, uint8_t y);
+void _graphics_drawApple(Apple *apple);
+void _graphics_hideApple(Apple *apple);
 
 
 #endif

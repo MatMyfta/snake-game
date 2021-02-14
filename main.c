@@ -1,54 +1,24 @@
-/* --COPYRIGHT--,BSD
- * Copyright (c) 2015, Texas Instruments Incorporated
- * All rights reserved.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- *
- * *  Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- *
- * *  Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
- *
- * *  Neither the name of Texas Instruments Incorporated nor the names of
- *    its contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
- *
- * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
- * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO,
- * THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
- * PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR
- * CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
- * EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
- * PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS;
- * OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
- * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
- * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE,
- * EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- * --/COPYRIGHT--*/
 //****************************************************************************
 //
 // main.c - MSP-EXP432P401R + Educational Boosterpack MkII - Snake game
 //
-//          CMSIS DSP Software Library is used to perform 512-point FFT on
-//          the audio samples collected with MSP432's ADC14 from the Education
-//          Boosterpack's onboard microhpone. The resulting frequency bin data
-//          is displayed on the BoosterPack's 128x128 LCD.
+// author:  Mateo Myftaraj
 //
 //****************************************************************************
 
 #include <ti/devices/msp432p4xx/inc/msp.h>
 #include <ti/devices/msp432p4xx/driverlib/driverlib.h>
 #include <stdio.h>
+#include <stdio.h>
 #include <stdlib.h>
+#include <time.h>
 #include "snake.h"
 #include "graphics.h"
 
 #define LF_DW   4000
 #define RG_UP   12000
+
+void draw();
 
 
 /* Graphic library context */
@@ -137,14 +107,19 @@ void _hwInit() {
 
 
 int main(void) {
+    /* generate seed for random function */
+    srand( time(NULL) );
 
     /* Initialize hardware */
     _hwInit();
 
-    /* Initialize snake structures */
+
+    /* Initialize snake and apple structures */
     s_init(&snake);
+    init_apple();
 
     _graphics_drawSnake(&snake);
+    _graphics_drawApple(&apple);
 
     while(1)
     {
@@ -153,12 +128,22 @@ int main(void) {
 
 }
 
+/*
+ * Draw the snake and the apple on the screen
+ */
+void draw() {
+    _graphics_drawSnake(&snake);
+    _graphics_drawApple(&apple);
+    for (int i = 0; i < 240000; i++);
+}
+
 /* This interrupt is fired whenever a conversion is completed and placed in
  * ADC_MEM1. This signals the end of conversion and the results array is
  * grabbed and placed in resultsBuffer */
 void ADC14_IRQHandler(void)
 {
     uint64_t status;
+    uint8_t s = 1;
 
     /* Returns the status of a the ADC interrupt register masked with the
      * enabled interrupts. */
@@ -167,7 +152,7 @@ void ADC14_IRQHandler(void)
     MAP_ADC14_clearInterruptFlag(status);
 
     /* ADC_MEM1 conversion completed */
-    if(status & ADC_INT1)
+    if(status & ADC_INT1 && s)
     {
         /* Returns the conversion result for the specified memory channel in
          * the format assigned by the ADC14_setResultFormat (unsigned binary
@@ -184,26 +169,35 @@ void ADC14_IRQHandler(void)
 
         /* go left */
         if (resultsBuffer[0] <= LF_DW && _h->next->x != _x-1) {
+            s = 0;
             s_move(&snake,_x-1,_y);
-            _graphics_drawSnake(&snake);
+            draw();
+            s = 1;
         }
         /* go right */
         else if (resultsBuffer[0] >= RG_UP && _h->next->x != _x+1) {
+            s = 0;
             s_move(&snake,_x+1,_y);
-            _graphics_drawSnake(&snake);
+            draw();
+            s = 1;
         }
         /* go down */
         else if (resultsBuffer[1] <= LF_DW && _h->next->y != _y+1) {
+            s = 0;
             s_move(&snake,_x,_y+1);
-            _graphics_drawSnake(&snake);
+            draw();
+            s = 1;
         }
         /* go up */
         else if (resultsBuffer[1] >= RG_UP && _h->next->y != _y-1) {
+            s = 0;
             s_move(&snake,_x,_y-1);
-            _graphics_drawSnake(&snake);
+            draw();
+            s = 1;
         }
 
         // enable interrupt again
         MAP_Interrupt_enableInterrupt(INT_ADC14);
     }
 }
+

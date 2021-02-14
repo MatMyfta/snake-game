@@ -8,8 +8,6 @@ void _graphics_drawNode(uint8_t, uint8_t);
 void _graphics_drawSnake(Snake *s) {
     Node *_tmp = s->head;
 
-    Graphics_clearDisplay(&g_sContext);
-
     // For each node
     while (_tmp != NULL) {
         _graphics_drawNode(_tmp->x, _tmp->y);
@@ -23,4 +21,22 @@ void _graphics_drawSnake(Snake *s) {
 void _graphics_drawNode(uint8_t x, uint8_t y) {
     Graphics_Rectangle n_rect = { x*RATIO, y*RATIO, (x+1)*RATIO-1, (y+1)*RATIO-1 };
     Graphics_fillRectangle(&g_sContext,&n_rect);
+}
+
+void _graphics_hideNode(uint8_t x, uint8_t y) {
+    Graphics_setForegroundColor(&g_sContext, GRAPHICS_COLOR_WHITE);
+    Graphics_Rectangle n_rect = { x*RATIO, y*RATIO, (x+1)*RATIO-1, (y+1)*RATIO-1 };
+    Graphics_fillRectangle(&g_sContext,&n_rect);
+    Graphics_setForegroundColor(&g_sContext, GRAPHICS_COLOR_BLACK);
+}
+
+void _graphics_drawApple(Apple *apple) {
+    Graphics_fillCircle(&g_sContext, apple->x*RATIO+1, apple->y*RATIO+1, 2);
+}
+
+void _graphics_hideApple(Apple *apple) {
+    Graphics_setForegroundColor(&g_sContext, GRAPHICS_COLOR_WHITE);
+    Graphics_fillCircle(&g_sContext, apple->x*RATIO+1, apple->y*RATIO+1, 2);
+    Graphics_setForegroundColor(&g_sContext, GRAPHICS_COLOR_BLACK);
+
 }

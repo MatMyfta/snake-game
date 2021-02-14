@@ -27,11 +27,23 @@ void s_init(Snake *snake) {
  * moves the snake
  */
 void s_move(Snake *s, uint8_t x, uint8_t y) {
+    if (x == MAX_RANGE) x = MIN_RANGE+1;
+    if (x == MIN_RANGE) x = MAX_RANGE-1;
+    if (y == MAX_RANGE) y = MIN_RANGE+1;
+    if (y == MIN_RANGE) y = MAX_RANGE-1;
     s_add(s,x,y);
 
-    s->tail = s->tail->prev;
-    free(s->tail->next);
-    s->tail->next = NULL;
+    _graphics_drawNode(x,y);
+
+    if (x == apple.x && y == apple.y) {
+        _graphics_hideApple(&apple);
+        init_apple();
+    } else {
+        _graphics_hideNode(s->tail->x, s->tail->y);
+        s->tail = s->tail->prev;
+        free(s->tail->next);
+        s->tail->next = NULL;
+    }
 }
 
 /*
