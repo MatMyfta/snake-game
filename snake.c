@@ -26,7 +26,13 @@ void s_init(Snake *snake) {
 /*
  * moves the snake
  */
-void s_move(Snake *s, uint8_t x, uint8_t y) { }
+void s_move(Snake *s, uint8_t x, uint8_t y) {
+    s_add(s,x,y);
+
+    s->tail = s->tail->prev;
+    free(s->tail->next);
+    s->tail->next = NULL;
+}
 
 /*
  * Add a node to the snake by adding a new point to the head
@@ -44,7 +50,7 @@ void s_add(Snake *s, uint8_t x, uint8_t y) {
 
 void deinit(Snake *s) {
     Node *tmp = s->head;
-    while(tmp != NULL) {
+    while(tmp) {
         Node *p = tmp;
         tmp = tmp->next;
         free(p);
