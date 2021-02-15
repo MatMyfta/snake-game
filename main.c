@@ -18,7 +18,8 @@
 #define LF_DW   4000
 #define RG_UP   12000
 
-uint8_t freeze;
+uint8_t freeze,count;
+Node *default_next;
 
 /* Graphic library context */
 Graphics_Context g_sContext;
@@ -27,6 +28,16 @@ Graphics_Context g_sContext;
 static uint16_t resultsBuffer[2];
 
 Snake snake;
+
+/* Statics */
+const Timer_A_UpModeConfig upConfig = {
+    TIMER_A_CLOCKSOURCE_SMCLK,              // SMCLK = 3 MhZ
+    TIMER_A_CLOCKSOURCE_DIVIDER_12,         // SMCLK/12 = 250 KhZ
+    12000,                                  // 24 ms tick period
+    TIMER_A_TAIE_INTERRUPT_DISABLE,         // Disable Timer interrupt
+    TIMER_A_CCIE_CCR0_INTERRUPT_DISABLE,    // Disable CCR0 interrupt
+    TIMER_A_DO_CLEAR                        // Clear value
+};
 
 void _graphicsInit()
 {
@@ -47,14 +58,19 @@ void _graphicsInit()
 }
 
 void _delayTimerInit() {
-    /* Initializes timer */
-    TIMER_A0->CCTL[0] = TIMER_A_CCTLN_CCIE; // TACCR0 interrupt enabled
-    TIMER_A0->CCR[0] = 240*32;
-    TIMER_A0->CTL = TIMER_A_CTL_SSEL__SMCLK | // SMCLK, continuous mode
-            TIMER_A_CTL_MC__CONTINUOUS;
+    MAP_GPIO_setAsOutputPin(GPIO_PORT_P1, GPIO_PIN0);
+    MAP_GPIO_setOutputLowOnPin(GPIO_PORT_P1, GPIO_PIN2);
 
-    // Enable timer interrupt
-    NVIC->ISER[0] = 1 << ((TA0_0_IRQn) & 31);
+    /* Initializing ACLK to LFXT (effectively 32khz) */
+    MAP_CS_initClockSignal(CS_ACLK, CS_LFXTCLK_SELECT, CS_CLOCK_DIVIDER_1);
+
+    /* Configuring Timer_A1 for Up Mode */
+    MAP_Timer_A_configureUpMode(TIMER_A0_BASE, &upConfig);
+
+    /* Enabling interrupts and starting the timer */
+    MAP_Interrupt_enableSleepOnIsrExit();
+    MAP_Interrupt_enableInterrupt(INT_TA1_0);
+    MAP_Timer_A_startCounter(TIMER_A0_BASE, TIMER_A_UP_MODE);
 
     freeze = 1;
 }
@@ -118,7 +134,6 @@ void _hwInit() {
     MAP_ADC14_toggleConversionTrigger();
 }
 
-
 int main(void) {
     /* generate seed for random function */
     srand( CS_DCOCLK_SELECT );
@@ -127,6 +142,7 @@ int main(void) {
     _hwInit();
 
     freeze = 0;
+    count = 0;
 
     /* Initialize snake and apple structures */
     s_init(&snake);
@@ -143,6 +159,17 @@ int main(void) {
 }
 
 /*
+ * Set the default next node
+ * the default next node is used when no ADC interrupt occurred
+ * and sleep timer expires
+ */
+void setDefaultNextNode(uint8_t x, uint8_t y) {
+    default_next->x = x;
+    default_next->y = y;
+    count = 0;
+}
+
+/*
  * Draw the snake and the apple on the screen
  */
 void draw() {
@@ -152,17 +179,35 @@ void draw() {
     _delayTimerInit();
 }
 
-void TA0_0_IRQHandler(void) {
-    TIMER_A0->CCTL[0] &= ~TIMER_A_CCTLN_CCIFG;
-    P1->OUT ^= BIT0;
-    freeze = 0;
+// This is the TIMERA interrupt vector service routine.
+void TA1_0_IRQHandler(void) {
+    MAP_GPIO_toggleOutputOnPin(GPIO_PORT_P1, GPIO_PIN0);
+    MAP_Timer_A_clearCaptureCompareInterrupt(TIMER_A0_BASE,
+            TIMER_A_CAPTURECOMPARE_REGISTER_0);
+
+    if (count >= 10) {
+        // no interrupts triggered
+        if (default_next->x == snake.head->x-1)
+            setDefaultNextNode(default_next->x-1,default_next->y);
+        else if (default_next->x == snake.head->x+1)
+            setDefaultNextNode(default_next->x+1,default_next->y);
+        else if (default_next->y == snake.head->y-1)
+            setDefaultNextNode(default_next->x,default_next->y-1);
+        else
+            setDefaultNextNode(default_next->x-1,default_next->y+1);
+
+        s_move(&snake,default_next->x,default_next->y);
+        freeze = 1;
+    } else if (count >= 1)
+        freeze = 0;
+    else
+        count++;
 }
 
 /* This interrupt is fired whenever a conversion is completed and placed in
  * ADC_MEM1. This signals the end of conversion and the results array is
  * grabbed and placed in resultsBuffer */
-void ADC14_IRQHandler(void)
-{
+void ADC14_IRQHandler(void) {
     uint64_t status;
 
     /* Returns the status of a the ADC interrupt register masked with the
@@ -175,8 +220,7 @@ void ADC14_IRQHandler(void)
     MAP_Interrupt_disableInterrupt(INT_ADC14);
 
     /* ADC_MEM1 conversion completed */
-    if(status & ADC_INT1 && game && !freeze)
-    {
+    if(status & ADC_INT1 && game && freeze==0) {
         /* Returns the conversion result for the specified memory channel in
          * the format assigned by the ADC14_setResultFormat (unsigned binary
          * by default) function. Then stores the value in a buffer.*/
@@ -187,25 +231,28 @@ void ADC14_IRQHandler(void)
         Node *_h = snake.head;
         uint8_t _x = _h->x, _y = _h->y;
 
-
         /* go left */
         if (resultsBuffer[0] <= LF_DW && _h->next->x != _x-1) {
             s_move(&snake,_x-1,_y);
+            setDefaultNextNode(_x-2,_y);
             draw();
         }
         /* go right */
         else if (resultsBuffer[0] >= RG_UP && _h->next->x != _x+1) {
             s_move(&snake,_x+1,_y);
+            setDefaultNextNode(_x+2,_y);
             draw();
         }
         /* go down */
         else if (resultsBuffer[1] <= LF_DW && _h->next->y != _y+1) {
             s_move(&snake,_x,_y+1);
+            setDefaultNextNode(_x,_y+2);
             draw();
         }
         /* go up */
         else if (resultsBuffer[1] >= RG_UP && _h->next->y != _y-1) {
             s_move(&snake,_x,_y-1);
+            setDefaultNextNode(_x,_y-2);
             draw();
         }
     }
