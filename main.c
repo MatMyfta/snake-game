@@ -18,8 +18,7 @@
 #define LF_DW   4000
 #define RG_UP   12000
 
-void draw();
-
+uint8_t freeze;
 
 /* Graphic library context */
 Graphics_Context g_sContext;
@@ -47,6 +46,19 @@ void _graphicsInit()
 
 }
 
+void _delayTimerInit() {
+    /* Initializes timer */
+    TIMER_A0->CCTL[0] = TIMER_A_CCTLN_CCIE; // TACCR0 interrupt enabled
+    TIMER_A0->CCR[0] = 240*32;
+    TIMER_A0->CTL = TIMER_A_CTL_SSEL__SMCLK | // SMCLK, continuous mode
+            TIMER_A_CTL_MC__CONTINUOUS;
+
+    // Enable timer interrupt
+    NVIC->ISER[0] = 1 << ((TA0_0_IRQn) & 31);
+
+    freeze = 1;
+}
+
 void _hwInit() {
     /* Halting WDT and disabling master interrupts */
     MAP_WDT_A_holdTimer();
@@ -67,6 +79,7 @@ void _hwInit() {
     MAP_CS_initClockSignal(CS_ACLK, CS_REFOCLK_SELECT, CS_CLOCK_DIVIDER_1);
 
     _graphicsInit();
+    _delayTimerInit();
 
     /* Configures Pin 6.0 and 4.4 as ADC input */
     MAP_GPIO_setAsPeripheralModuleFunctionInputPin(GPIO_PORT_P6, GPIO_PIN0, GPIO_TERTIARY_MODULE_FUNCTION);
@@ -108,11 +121,12 @@ void _hwInit() {
 
 int main(void) {
     /* generate seed for random function */
-    srand( time(NULL) );
+    srand( CS_DCOCLK_SELECT );
 
     /* Initialize hardware */
     _hwInit();
 
+    freeze = 0;
 
     /* Initialize snake and apple structures */
     s_init(&snake);
@@ -134,7 +148,14 @@ int main(void) {
 void draw() {
     _graphics_drawSnake(&snake);
     _graphics_drawApple(&apple);
-    for (int i = 0; i < 240000; i++);
+
+    _delayTimerInit();
+}
+
+void TA0_0_IRQHandler(void) {
+    TIMER_A0->CCTL[0] &= ~TIMER_A_CCTLN_CCIFG;
+    P1->OUT ^= BIT0;
+    freeze = 0;
 }
 
 /* This interrupt is fired whenever a conversion is completed and placed in
@@ -143,7 +164,6 @@ void draw() {
 void ADC14_IRQHandler(void)
 {
     uint64_t status;
-    uint8_t s = 1;
 
     /* Returns the status of a the ADC interrupt register masked with the
      * enabled interrupts. */
@@ -151,8 +171,11 @@ void ADC14_IRQHandler(void)
     /* Clears the indicated ADCC interrupt sources. */
     MAP_ADC14_clearInterruptFlag(status);
 
+    // disable the interrupt to compute the results
+    MAP_Interrupt_disableInterrupt(INT_ADC14);
+
     /* ADC_MEM1 conversion completed */
-    if(status & ADC_INT1 && s)
+    if(status & ADC_INT1 && game && !freeze)
     {
         /* Returns the conversion result for the specified memory channel in
          * the format assigned by the ADC14_setResultFormat (unsigned binary
@@ -164,40 +187,29 @@ void ADC14_IRQHandler(void)
         Node *_h = snake.head;
         uint8_t _x = _h->x, _y = _h->y;
 
-        // disable the interrupt
-        MAP_Interrupt_disableInterrupt(INT_ADC14);
 
         /* go left */
         if (resultsBuffer[0] <= LF_DW && _h->next->x != _x-1) {
-            s = 0;
             s_move(&snake,_x-1,_y);
             draw();
-            s = 1;
         }
         /* go right */
         else if (resultsBuffer[0] >= RG_UP && _h->next->x != _x+1) {
-            s = 0;
             s_move(&snake,_x+1,_y);
             draw();
-            s = 1;
         }
         /* go down */
         else if (resultsBuffer[1] <= LF_DW && _h->next->y != _y+1) {
-            s = 0;
             s_move(&snake,_x,_y+1);
             draw();
-            s = 1;
         }
         /* go up */
         else if (resultsBuffer[1] >= RG_UP && _h->next->y != _y-1) {
-            s = 0;
             s_move(&snake,_x,_y-1);
             draw();
-            s = 1;
         }
-
-        // enable interrupt again
-        MAP_Interrupt_enableInterrupt(INT_ADC14);
     }
+    // enable interrupt again
+    MAP_Interrupt_enableInterrupt(INT_ADC14);
 }
 

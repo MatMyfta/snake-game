@@ -1,3 +1,4 @@
+#include <ti/devices/msp432p4xx/driverlib/driverlib.h>
 #include "snake.h"
 #include "graphics.h"
 #include <stdlib.h>
@@ -21,6 +22,18 @@ void s_init(Snake *snake) {
     s_add(snake, n->x+1, n->y);
     snake->tail->prev = snake->head;
     s_add(snake, n->x+2, n->y);
+
+    game = 1;
+}
+
+int s_contains(Snake *s, uint8_t x, uint8_t y) {
+    Node *tmp = s->head;
+    while (tmp != NULL) {
+        if (tmp->x == x && tmp->y == y)
+            return 1;
+        tmp = tmp->next;
+    }
+    return 0;
 }
 
 /*
@@ -35,14 +48,20 @@ void s_move(Snake *s, uint8_t x, uint8_t y) {
 
     _graphics_drawNode(x,y);
 
-    if (x == apple.x && y == apple.y) {
-        _graphics_hideApple(&apple);
-        init_apple();
-    } else {
-        _graphics_hideNode(s->tail->x, s->tail->y);
-        s->tail = s->tail->prev;
-        free(s->tail->next);
-        s->tail->next = NULL;
+    if(s_contains(&s,x,y) == 1) {
+        game = 0;
+        _graphics_lose(x,y);
+    }
+    else {
+        if (x == apple.x && y == apple.y) {
+            _graphics_hideApple(&apple);
+            init_apple();
+        } else {
+            _graphics_hideNode(s->tail->x, s->tail->y);
+            s->tail = s->tail->prev;
+            free(s->tail->next);
+            s->tail->next = NULL;
+        }
     }
 }
 

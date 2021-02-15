@@ -16,6 +16,7 @@ typedef struct Snake {
     Node *tail;
 }Snake;
 
+uint8_t game;
 
 void s_init(Snake *s);
 void s_move(Snake *s, uint8_t x, uint8_t y);

@@ -25,9 +25,14 @@ void _graphics_drawNode(uint8_t x, uint8_t y) {
 
 void _graphics_hideNode(uint8_t x, uint8_t y) {
     Graphics_setForegroundColor(&g_sContext, GRAPHICS_COLOR_WHITE);
-    Graphics_Rectangle n_rect = { x*RATIO, y*RATIO, (x+1)*RATIO-1, (y+1)*RATIO-1 };
-    Graphics_fillRectangle(&g_sContext,&n_rect);
+    _graphics_drawNode(x,y);
     Graphics_setForegroundColor(&g_sContext, GRAPHICS_COLOR_BLACK);
+}
+
+void _graphics_lose(uint8_t x, uint8_t y) {
+    Graphics_setForegroundColor(&g_sContext, GRAPHICS_COLOR_RED);
+    _graphics_drawNode(x,y);
+    //Graphics_setForegroundColor(&g_sContext, GRAPHICS_COLOR_BLACK);
 }
 
 void _graphics_drawApple(Apple *apple) {
@@ -36,7 +41,7 @@ void _graphics_drawApple(Apple *apple) {
 
 void _graphics_hideApple(Apple *apple) {
     Graphics_setForegroundColor(&g_sContext, GRAPHICS_COLOR_WHITE);
-    Graphics_fillCircle(&g_sContext, apple->x*RATIO+1, apple->y*RATIO+1, 2);
+    Graphics_fillCircle(&g_sContext, apple->x*RATIO+1, apple->y*RATIO+1, 3);
     Graphics_setForegroundColor(&g_sContext, GRAPHICS_COLOR_BLACK);
 
 }

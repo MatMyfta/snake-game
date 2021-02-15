@@ -1,6 +1,7 @@
 #include "apple.h"
 #include "graphics.h"
 #include <stdlib.h>
+#include <ti/devices/msp432p4xx/driverlib/driverlib.h>
 
 uint8_t get_rand();
 void init_apple();
@@ -12,5 +13,5 @@ void init_apple() {
 }
 
 uint8_t get_rand() {
-    return (uint8_t) (rand() % (MAX_RANGE - MIN_RANGE) + 1);
+    return (uint8_t) ((rand()*ADC14_getResult(ADC_MEM0)/ADC14_getResult(ADC_MEM1) << 10)% (MAX_RANGE-1 - MIN_RANGE) + 1);
 }
