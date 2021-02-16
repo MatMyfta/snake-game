@@ -18,6 +18,7 @@ void s_init(Snake *snake) {
 
     snake->head = n;
     snake->tail = n;
+    snake->score = 0;
 
     s_add(snake, n->x+1, n->y);
     snake->tail->prev = snake->head;
@@ -27,8 +28,8 @@ void s_init(Snake *snake) {
 }
 
 int s_contains(Snake *s, uint8_t x, uint8_t y) {
-    Node *tmp = s->head;
-    while (tmp != NULL) {
+    Node *tmp = s->head->next;
+    while (tmp != s->tail->next) {
         if (tmp->x == x && tmp->y == y)
             return 1;
         tmp = tmp->next;
@@ -48,13 +49,15 @@ void s_move(Snake *s, uint8_t x, uint8_t y) {
 
     _graphics_drawNode(x,y);
 
-    if(s_contains(&s,x,y) == 1) {
+    if(s_contains(s,x,y) == 1) {
+        highscore = ((s->score) >= highscore ? (s->score) : highscore);
         game = 0;
-        _graphics_lose(x,y);
+        _graphics_lose(s,x,y);
     }
     else {
         if (x == apple.x && y == apple.y) {
             _graphics_hideApple(&apple);
+            s->score += 5;
             init_apple();
         } else {
             _graphics_hideNode(s->tail->x, s->tail->y);

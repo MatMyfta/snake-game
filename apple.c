@@ -13,5 +13,5 @@ void init_apple() {
 }
 
 uint8_t get_rand() {
-    return (uint8_t) ((rand()*ADC14_getResult(ADC_MEM0)/ADC14_getResult(ADC_MEM1) << 10)% (MAX_RANGE-1 - MIN_RANGE) + 1);
+    return (uint8_t) ((rand()*ADC14_getResult(ADC_MEM0)) % (MAX_RANGE-1 - MIN_RANGE) + 1);
 }

@@ -1,9 +1,41 @@
 #include "graphics.h"
+#include <stdio.h>
+#include <stdlib.h>
 
-#define NULL (void*)0
+extern uint8_t highscore;
 
 void _graphics_drawSnake(Snake* s);
 void _graphics_drawNode(uint8_t, uint8_t);
+
+void _graphics_initMenu() {
+    Graphics_drawStringCentered(&g_sContext,
+                                    (int8_t *)"Welcome to SNAKE",
+                                    AUTO_STRING_LENGTH,
+                                    64,
+                                    20,
+                                    OPAQUE_TEXT);
+    Graphics_drawStringCentered(&g_sContext,
+                                    (int8_t *)"Press left button",
+                                    AUTO_STRING_LENGTH,
+                                    64,
+                                    40,
+                                    OPAQUE_TEXT);
+    Graphics_drawStringCentered(&g_sContext,
+                                    (int8_t *)"to start game",
+                                    AUTO_STRING_LENGTH,
+                                    64,
+                                    55,
+                                    OPAQUE_TEXT);
+
+    char string[19];
+    sprintf(string, "highscore: %5d", highscore);
+    Graphics_drawStringCentered(&g_sContext,
+                                    (int8_t *)string,
+                                    19,
+                                    64,
+                                    105,
+                                    OPAQUE_TEXT);
+}
 
 void _graphics_drawSnake(Snake *s) {
     Node *_tmp = s->head;
@@ -29,9 +61,37 @@ void _graphics_hideNode(uint8_t x, uint8_t y) {
     Graphics_setForegroundColor(&g_sContext, GRAPHICS_COLOR_BLACK);
 }
 
-void _graphics_lose(uint8_t x, uint8_t y) {
+void _graphics_lose(Snake *s, uint8_t x, uint8_t y) {
     Graphics_setForegroundColor(&g_sContext, GRAPHICS_COLOR_RED);
     _graphics_drawNode(x,y);
+
+    Graphics_setForegroundColor(&g_sContext, GRAPHICS_COLOR_BLACK);
+    Graphics_drawStringCentered(&g_sContext,
+                                    (int8_t *)"LMAO, looser",
+                                    AUTO_STRING_LENGTH,
+                                    64,
+                                    25,
+                                    OPAQUE_TEXT);
+    char string[14];
+    sprintf(string, "Score: %5d", s->score);
+    Graphics_drawStringCentered(&g_sContext,
+                                    (int8_t *)string,
+                                    14,
+                                    64,
+                                    60,
+                                    OPAQUE_TEXT);
+    Graphics_drawStringCentered(&g_sContext,
+                                    (int8_t *)"Press S2 to go",
+                                    AUTO_STRING_LENGTH,
+                                    64,
+                                    85,
+                                    OPAQUE_TEXT);
+    Graphics_drawStringCentered(&g_sContext,
+                                    (int8_t *)"back to menu",
+                                    AUTO_STRING_LENGTH,
+                                    64,
+                                    100,
+                                    OPAQUE_TEXT);
     //Graphics_setForegroundColor(&g_sContext, GRAPHICS_COLOR_BLACK);
 }
 

@@ -8,10 +8,8 @@
 #include "snake.h"
 #include "apple.h"
 
-#ifndef __CONTEXT__
-#define __CONTEXT__
+extern uint8_t highscore;
 extern Graphics_Context g_sContext;
-#endif
 
 #define LCD_SIZE    128
 
@@ -19,10 +17,11 @@ extern Graphics_Context g_sContext;
 #define MAX_RANGE   31          // max margin is 128/RATIO-1
 #define RATIO       4           // 1:4, 1 node = 4 pixels
 
+void _graphics_initMenu();
 void _graphics_drawSnake(Snake* s);
 void _graphics_drawNode(uint8_t x, uint8_t y);
 void _graphics_hideNode(uint8_t x, uint8_t y);
-void _graphics_lose(uint8_t x, uint8_t y);
+void _graphics_lose(Snake* s, uint8_t x, uint8_t y);
 void _graphics_drawApple(Apple *apple);
 void _graphics_hideApple(Apple *apple);
 
