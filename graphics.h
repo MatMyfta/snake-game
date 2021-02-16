@@ -17,6 +17,7 @@ extern Graphics_Context g_sContext;
 #define MAX_RANGE   31          // max margin is 128/RATIO-1
 #define RATIO       4           // 1:4, 1 node = 4 pixels
 
+void _graphicsInit();
 void _graphics_initMenu();
 void _graphics_drawSnake(Snake* s);
 void _graphics_drawNode(uint8_t x, uint8_t y);

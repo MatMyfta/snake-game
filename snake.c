@@ -37,9 +37,7 @@ int s_contains(Snake *s, uint8_t x, uint8_t y) {
     return 0;
 }
 
-/*
- * moves the snake
- */
+/* moves the snake */
 void s_move(Snake *s, uint8_t x, uint8_t y) {
     if (x == MAX_RANGE) x = MIN_RANGE+1;
     if (x == MIN_RANGE) x = MAX_RANGE-1;
@@ -49,12 +47,16 @@ void s_move(Snake *s, uint8_t x, uint8_t y) {
 
     _graphics_drawNode(x,y);
 
+    // the snake contains the next node
+    // game over
     if(s_contains(s,x,y) == 1) {
         highscore = ((s->score) >= highscore ? (s->score) : highscore);
         game = 0;
         _graphics_lose(s,x,y);
+        deinit(s);
     }
     else {
+        // apple detected
         if (x == apple.x && y == apple.y) {
             _graphics_hideApple(&apple);
             s->score += 5;

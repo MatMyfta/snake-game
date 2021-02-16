@@ -20,10 +20,17 @@
 #define LF_DW   4000
 #define RG_UP   12000
 
+#define EASY_DIFF   2
+#define HARD_DIFF   1
+
+#define SLEEP       5
+
+typedef enum { EASY, HARD } Difficulty;
+
+Difficulty diff = EASY;
 uint8_t menu, game;
 uint8_t count;
 uint8_t highscore = 0;
-Node default_next;
 
 /* Graphic library context */
 Graphics_Context g_sContext;
@@ -33,16 +40,14 @@ static uint16_t resultsBuffer[2];
 
 Snake snake;
 
-void setDefaultNextNode(int,int);
-
 /* Statics */
 const Timer_A_UpModeConfig upConfig = {
-    TIMER_A_CLOCKSOURCE_ACLK,
-    TIMER_A_CLOCKSOURCE_DIVIDER_12,
-    180,
-    TIMER_A_TAIE_INTERRUPT_DISABLE,         // Disable Timer interrupt
-    TIMER_A_CCIE_CCR0_INTERRUPT_ENABLE,     // Enable CCR0 interrupt
-    TIMER_A_DO_CLEAR                        // Clear value
+    TIMER_A_CLOCKSOURCE_ACLK,                   // 32kHz
+    TIMER_A_CLOCKSOURCE_DIVIDER_12,             // divider by / 12 ~= 3kHz
+    120,                                        // 120/3000 kHz ~= 40ms
+    TIMER_A_TAIE_INTERRUPT_DISABLE,             // Disable Timer interrupt
+    TIMER_A_CCIE_CCR0_INTERRUPT_ENABLE,         // Enable CCR0 interrupt
+    TIMER_A_DO_CLEAR                            // Clear value
 };
 
 Timer_A_CompareModeConfig compareConfig_PWM = {
@@ -51,24 +56,6 @@ Timer_A_CompareModeConfig compareConfig_PWM = {
     TIMER_A_OUTPUTMODE_TOGGLE_SET,
     5000
 };
-
-void _graphicsInit()
-{
-    /* Initializes display */
-    Crystalfontz128x128_Init();
-
-    /* Set default screen orientation */
-    Crystalfontz128x128_SetOrientation(LCD_ORIENTATION_UP);
-
-    /* Initializes graphics context */
-    Graphics_initContext(&g_sContext, &g_sCrystalfontz128x128,
-                         &g_sCrystalfontz128x128_funcs);
-    Graphics_setForegroundColor(&g_sContext, GRAPHICS_COLOR_BLACK);
-    Graphics_setBackgroundColor(&g_sContext, GRAPHICS_COLOR_WHITE);
-    Graphics_setFont(&g_sContext, &g_sFontFixed6x8);
-    Graphics_clearDisplay(&g_sContext);
-
-}
 
 void _delayTimerInit() {
 
@@ -83,23 +70,6 @@ void _delayTimerInit() {
     /* Enabling interrupts and starting the timer */
     MAP_Interrupt_enableInterrupt(INT_TA0_0);
     MAP_Timer_A_startCounter(TIMER_A0_BASE, TIMER_A_UP_MODE);
-}
-
-void _pushButtonsInit() {
-    GPIO_setAsInputPin (GPIO_PORT_P5, GPIO_PIN1); // upper switch S1 on BoostXL
-    GPIO_setAsInputPin (GPIO_PORT_P3, GPIO_PIN5); // lower switch S2 on BoostXL
-
-    /* Red LED */
-    GPIO_setAsOutputPin(GPIO_PORT_P1, GPIO_PIN0);
-    GPIO_setOutputLowOnPin(GPIO_PORT_P1, GPIO_PIN0);
-
-    GPIO_interruptEdgeSelect(GPIO_PORT_P1, GPIO_PIN1, GPIO_HIGH_TO_LOW_TRANSITION);
-    GPIO_interruptEdgeSelect(GPIO_PORT_P1, GPIO_PIN4, GPIO_HIGH_TO_LOW_TRANSITION);
-
-    GPIO_enableInterrupt(GPIO_PORT_P1, GPIO_PIN1);
-    GPIO_clearInterruptFlag(GPIO_PORT_P1, GPIO_PIN1);
-    GPIO_enableInterrupt(GPIO_PORT_P1, GPIO_PIN4);
-    GPIO_clearInterruptFlag(GPIO_PORT_P1, GPIO_PIN4);
 }
 
 void _buzzerInit() {
@@ -135,10 +105,11 @@ void _hwInit() {
     MAP_GPIO_enableInterrupt(GPIO_PORT_P1, GPIO_PIN1);
     MAP_GPIO_enableInterrupt(GPIO_PORT_P1, GPIO_PIN4);
     MAP_Interrupt_enableInterrupt(INT_PORT1);
+    MAP_Interrupt_enableInterrupt(INT_PORT4);
 
     _graphicsInit();
     _delayTimerInit();
-    _pushButtonsInit();
+    _buzzerInit();
 
     /* Configures Pin 6.0 and 4.4 as ADC input */
     MAP_GPIO_setAsPeripheralModuleFunctionInputPin(GPIO_PORT_P6, GPIO_PIN0, GPIO_TERTIARY_MODULE_FUNCTION);
@@ -187,7 +158,6 @@ void _gameInit() {
 
     /* Initialize snake and apple structures */
     s_init(&snake);
-    setDefaultNextNode(1,0);
     init_apple();
 
     Graphics_clearDisplay(&g_sContext);
@@ -203,6 +173,13 @@ void _menuInit() {
     Graphics_clearDisplay(&g_sContext);
 
     _graphics_initMenu(highscore);
+}
+
+void changeDifficulty() {
+    diff = (diff == EASY ? HARD : EASY);
+}
+int getDifficultyValue() {
+    return (diff == EASY ? EASY_DIFF : HARD_DIFF);
 }
 
 int main(void) {
@@ -233,36 +210,20 @@ void draw() {
     count = 0;
 }
 
-// right button
+// left button
 void PORT1_IRQHandler(void)
 {
-    uint32_t status;
-    status = MAP_GPIO_getEnabledInterruptStatus(GPIO_PORT_P1);
+    uint32_t status_p1;
+    status_p1 = MAP_GPIO_getEnabledInterruptStatus(GPIO_PORT_P1);
 
-    if(menu && (status & GPIO_PIN1)) {
+    if(menu && (status_p1 & GPIO_PIN1)) {
         _gameInit();
     }
-    if (!game && !menu &&(status & GPIO_PIN1)) {
+    if (!game && !menu &&(status_p1 & GPIO_PIN1)) {
         _menuInit();
     }
     GPIO_clearInterruptFlag(GPIO_PORT_P1, GPIO_PIN1);
 }
-
-// upper switch S2 on BoostXL
-//void PORT4_IRQHandler(void)
-//{
-//    uint32_t status;
-//
-//    // MAP_GPIO_setOutputHighOnPin(GPIO_PORT_P1, GPIO_PIN0);
-//
-//    status = MAP_GPIO_getEnabledInterruptStatus(GPIO_PORT_P1);
-//
-//    if(menu && (status & GPIO_PIN1))
-//    {
-//        GPIO_clearInterruptFlag(GPIO_PORT_P1, GPIO_PIN1);
-//        _gameInit();
-//    }
-//}
 
 // This is the TIMERA interrupt vector service routine.
 void TA0_0_IRQHandler(void) {
@@ -272,34 +233,27 @@ void TA0_0_IRQHandler(void) {
          * If count>=3 means that the user is sleeping;
          * this means that the snake should go straight by himself.
          */
-        if (count >= 5) {
+        if (count >= SLEEP*getDifficultyValue()) {
+            /* helper variables */
+            uint8_t x = snake.head->x;
+            uint8_t _x = snake.head->next->x;
+            uint8_t y = snake.head->y;
+            uint8_t _y = snake.head->next->y;
 
-            s_move(&snake,default_next.x, default_next.y);
-
-            // no interrupts triggered
-             if (default_next.x == (snake.head->x)-1)
-                setDefaultNextNode(-1, 0);
-            else if (default_next.x == (snake.head->x)+1)
-                setDefaultNextNode(1, 0);
-            else if (default_next.y == (snake.head->y)-1)
-                setDefaultNextNode(0, -1);
-            else
-                setDefaultNextNode(0, 1);
+            /* no interrupts triggered */
+            if (x == _x-1 || (x==MAX_RANGE-1 && _x==MIN_RANGE+1))
+                s_move(&snake,x-1,y);
+            else if (x == _x+1 || (x==MIN_RANGE+1 && _x==MAX_RANGE-1))
+                s_move(&snake,x+1,y);
+            else if (y == _y-1 || (y==MAX_RANGE-1 && _y==MIN_RANGE+1))
+                s_move(&snake,x,y-1);
+            else if (y == _y+1 || (y==MIN_RANGE+1 && _y==MAX_RANGE-1))
+                s_move(&snake,x,y+1);
+            count = 0;
         }
     }
     MAP_Timer_A_clearCaptureCompareInterrupt(TIMER_A0_BASE,
             TIMER_A_CAPTURECOMPARE_REGISTER_0);
-}
-
-/*
- * Set the default next node
- * the default next node is used when no ADC interrupt occurred
- * and sleep timer expires
- */
-void setDefaultNextNode(int dx, int dy) {
-    default_next.x = snake.head->x + dx;
-    default_next.y = snake.head->y + dy;
-    count = 0;
 }
 
 /* This interrupt is fired whenever a conversion is completed and placed in
@@ -325,7 +279,7 @@ void ADC14_IRQHandler(void) {
         /* ADC_MEM1 conversion completed
          * if count>=1 means that one timer interrupt has occurred;
          * that means, that a delay has been waited */
-        if(count >= 1 &&  count < 5 && (status & ADC_INT1)) {
+        if(count >= 1*getDifficultyValue() && count < SLEEP*getDifficultyValue() && (status & ADC_INT1)) {
             /* Returns the conversion result for the specified memory channel in
              * the format assigned by the ADC14_setResultFormat (unsigned binary
              * by default) function. Then stores the value in a buffer.*/
@@ -335,29 +289,21 @@ void ADC14_IRQHandler(void) {
             /* go left */
             if (resultsBuffer[0] <= LF_DW && _h->next->x != _x-1) {
                 s_move(&snake,_x-1,_y);
-                // setDefaultNextNode(-2,0);
-                setDefaultNextNode(-1, 0);
                 draw();
             }
             /* go right */
             else if (resultsBuffer[0] >= RG_UP && _h->next->x != _x+1) {
                 s_move(&snake,_x+1,_y);
-                // setDefaultNextNode(2,0);
-                setDefaultNextNode(+1, 0);
                 draw();
             }
             /* go down */
             else if (resultsBuffer[1] <= LF_DW && _h->next->y != _y+1) {
                 s_move(&snake,_x,_y+1);
-                // setDefaultNextNode(0,2);
-                setDefaultNextNode(0, 1);
                 draw();
             }
             /* go up */
             else if (resultsBuffer[1] >= RG_UP && _h->next->y != _y-1) {
                 s_move(&snake,_x,_y-1);
-                // setDefaultNextNode(0,-2);
-                setDefaultNextNode(0, -1);
                 draw();
             }
         }

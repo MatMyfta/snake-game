@@ -7,6 +7,23 @@ extern uint8_t highscore;
 void _graphics_drawSnake(Snake* s);
 void _graphics_drawNode(uint8_t, uint8_t);
 
+void _graphicsInit(){
+    /* Initializes display */
+    Crystalfontz128x128_Init();
+
+    /* Set default screen orientation */
+    Crystalfontz128x128_SetOrientation(LCD_ORIENTATION_UP);
+
+    /* Initializes graphics context */
+    Graphics_initContext(&g_sContext, &g_sCrystalfontz128x128,
+                         &g_sCrystalfontz128x128_funcs);
+    Graphics_setForegroundColor(&g_sContext, GRAPHICS_COLOR_BLACK);
+    Graphics_setBackgroundColor(&g_sContext, GRAPHICS_COLOR_WHITE);
+    Graphics_setFont(&g_sContext, &g_sFontFixed6x8);
+    Graphics_clearDisplay(&g_sContext);
+
+}
+
 void _graphics_initMenu() {
     Graphics_drawStringCentered(&g_sContext,
                                     (int8_t *)"Welcome to SNAKE",
@@ -18,13 +35,13 @@ void _graphics_initMenu() {
                                     (int8_t *)"Press left button",
                                     AUTO_STRING_LENGTH,
                                     64,
-                                    40,
+                                    55,
                                     OPAQUE_TEXT);
     Graphics_drawStringCentered(&g_sContext,
                                     (int8_t *)"to start game",
                                     AUTO_STRING_LENGTH,
                                     64,
-                                    55,
+                                    70,
                                     OPAQUE_TEXT);
 
     char string[19];
@@ -67,7 +84,7 @@ void _graphics_lose(Snake *s, uint8_t x, uint8_t y) {
 
     Graphics_setForegroundColor(&g_sContext, GRAPHICS_COLOR_BLACK);
     Graphics_drawStringCentered(&g_sContext,
-                                    (int8_t *)"LMAO, looser",
+                                    (int8_t *)"You lose",
                                     AUTO_STRING_LENGTH,
                                     64,
                                     25,
@@ -81,13 +98,13 @@ void _graphics_lose(Snake *s, uint8_t x, uint8_t y) {
                                     60,
                                     OPAQUE_TEXT);
     Graphics_drawStringCentered(&g_sContext,
-                                    (int8_t *)"Press S2 to go",
+                                    (int8_t *)"Press left button",
                                     AUTO_STRING_LENGTH,
                                     64,
                                     85,
                                     OPAQUE_TEXT);
     Graphics_drawStringCentered(&g_sContext,
-                                    (int8_t *)"back to menu",
+                                    (int8_t *)"to go back to menu",
                                     AUTO_STRING_LENGTH,
                                     64,
                                     100,
